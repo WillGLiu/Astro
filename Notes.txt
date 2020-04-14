@@ -1,0 +1,99 @@
+8/09/19 Notes:
+- break down function into smaller pieces; have one do the visibility simulation and hold onto that info, and the other can find the amp/phase error
+- change how we get unperturbed_vis back to just grabbing the first element and making an array from that
+- eventually, we'd like to do calculations over all the different baselines. Thus, it'd make sense to break it down first.
+- still need to work on last week's question by:
+    - more sensible definition of phase errors: "phase wrapping", +pi to -pi, probably need to use mod
+    - just be careful about those phase values; should print them out once to look
+- goal: plotting the error with respect to each/all the variables
+    - position error levels: 1mm, 5mm, 1cm, 5cm, 10cm, 50cm; or try np.logspace divisions
+    - generally: error tolerance is 4 times the largest position error
+    - setting random seed(s)? 
+- comparing the power spectra of the perturbed and the unperturbed systems
+- how to get it below
+
+9/6/19 Notes:
+- values of dictionaries can be dictionaries (can't be the keys though)
+
+`dictionary[error level][unique   baseline tuple (first baseline in each red)] = np.array(Ntimes,Nfreqs)`
+
+* ^Simulate the unperturbed visibilities 
+* Loop over position error levels:
+    * Simulate perturbed visibilities
+    * Loop over unique baselines:
+        * Calculate phase and amplitude errors for each unique baseline for all times and frequencies ~(use the unperturbed list of redundancies to avoid tolerance issues)~
+        * Save those values in some sort of nested dictionary (see above)
+* plot phase and amplitude errors vs. position error level, baseline length, time, frequency
+    
+
+10/18/19 Notes:
+- continue working on graphing the outputs, try different combinations of variables
+- try moving the relevant stuff to a new notebook entirely
+- try writing pseudo code first to get a clear idea of what you want to happen and then execute on that
+- the simulation step should only be a few lines that don't need to be rerun
+- For the unperturbed: only calculate for the 1st term in each redundancy
+- write the loops such that the unperturbed processes are not duplicated
+- perturbed and make a separate one called "average perturbed" 
+- start with perturbations ~ 2cm instead of 0.5m (wavelengths are about 2m)
+- averaged perturbed vs. unperturbed: look at the power spectra
+
+11/12/19 Notes:
+- combine vis_pert and vis_unpert if possible; some repeated lines in those
+- Fix the Pert vis function
+- "does the decoherence of the foreground spectrum tell us anything about the whole power spectrum?"
+    - measure decoherence as a function of perturbed baseline (and eventually pert beams)
+    - see if there is the same level of decoherence at higher modes of the Fourier spectrum
+- power spectra: difference in Fourier amplitudes
+- decoherence: difference between the power spectra of the unpert set vs power spectra of pert set
+1. find visibilities of unpert (can cheat and not average over unpert)
+2. find visibilities of pert (remember, average the visibilites, not the baselines)
+3. find the amplitude of the complex differences (this is a new one; might be more useful than the error in phases)
+4. find the differences in the amplitudes
+5. could also find the amplitude of the phase differences as well
+6. Build power spectra for the pert set of visibilities; plot
+- power spectra  = Fourier transform squared
+7. And for the unpert set as well; plot
+8. Expectation: pert amplitude should be smaller than unpert (see quarter circle plot on the messier notebook)
+9. Computing power spectra example somewhere in the notebook
+10. Change the functions to take in set of redundant baseline tuples instead of antpos; this way we can choose to take however many unique baselines there are in the calculation
+
+12/3/19 Notes
+- fix bug that produces the same visibility for very different baselines
+- quantifying decoherance using the ratio method, and comparing the values at delay = 0
+    - compare these as a function of perturbation level
+    - other things: time, baseline length
+- do the above for white noise spectrum
+    - Gaussian white noise, a property of the source, should be a function of frequency. 
+    - check the visibility() function to see what I'm talking about; there's a comment that explains it a little better there
+
+1/28/20 Notes:
+- abandon ship; make another notebook and reorganize and mass re-architecturize code.
+- big mess up: put "wn_" in front of a bunch of things instead of applying this "modular code" concept, which breaks the whole damn thing
+- Architecture-wise: large functions (like visibility, most importantly) can be shortened not in terms of functionality, but in length: meaning the smaller calculation steps its taking for the overall calculation can be written into several other functions. This is the idea of modularity, in which we can reduce the general length and copy/pasting of code through defining small but useful functions. Should also make debugging easier.
+- Take what you need: I suggest, as of right now, taking only the newest versions of things and also combining all the notes into one big note at the beginning of the next notebook. Should include things like finding/fixing decoherence, fixing visibility, general reorganization
+
+2/20/20 Notes:
+- After running generate_antpos, check that they share the same redundant baseline groups
+    - not that trivial of a problem actually; perhaps just checking the length of "reds" and "redsP" might be enough, but then I'd need proof. Otherwise, might need to check per baseline tuple if they match or not
+- Practice using "assert" to check for things we expect to be true in our code
+    - checking if the inputs are correct
+    - easier to catch bugs with these statements
+- In the perturbed and unperturbed system for noisy sources (white noise):
+    - mean/median of the ratio between the perturbed and unperturbed power spectra, over all delays
+- visibilities are linear and can be added (not that interesting unfortunately)
+- more realistically, the EOR white noise signal should be more like a grid evenly distributed across the sky
+- CHECK DECOHERENCE AS A FUNCTION OF BASELINE LENGTH AND AS A FUNCTION OF #BASELINES PER RED GROUP
+- maybe compare the (ratio of) visibility at delay = 0 rather than the average?
+- idea: many different decoherences involved, what method is best? gotta test to find out
+- WHAT SHOULD WE BE DOING WITH TIME? For now, my code doesn't touch it at all. Not sure what it does by default, which is BAD. FIGURE OUT HOW TO INCORPORATE IT. DONT AVERAGE VISIBILITIES OVER TIME. NEED TO WORK WITH RATIOS OF POWER SPECTRAS: either at 1 specific time or maybe average over all times. These ratios will be more constant over time, which will allow us to see the effect of the decoherence better.
+- MORE COMMENTS IN CODE; CHECK ON THOSE
+
+4/14/20
+- Try: Decoherence (Z) vs. Length (X) vs. Delay (Y)
+- example of 3d plot linked in slack
+- try doing the Deco vs. Length plot for all redudant baselines, not just the first 10
+- KEY QUESTION: Is there a relationship between the deco at Delay = 0 at (smooth spec) foregrounds vs. deco at high delay of just white noise sources (noisy spectra, use that) given the exact same perturbation? additionally, we can also compare delay = 0 of smooth spec vs. delay = 0 of noise sources. This second comparison would probably not result in much. SIGNAL DOMINATES AT HIG DELAY, FOREGROUND DOMINATES AT LOW DELAY.
+   - we expect some sort of relationship between them
+- focus on delay 0, but we can handpick a few other ones
+- github: commit, push, pull from github desktop app
+- fourier transform of white noise is FLAT
